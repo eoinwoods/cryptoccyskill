@@ -8,7 +8,7 @@ Build and Deploy
 
 Uses serverless to build and deploy, following AWS's instructions on packaging as the "request" library and its dependencies are needed as a dependency.
 
-1. pip install request -t $PWD # install to this root directory
+1. pip3 install -r requirements.txt -t $PWD # install to this root directory
 2. serverless test
 3. serverless deploy --verbose
 
