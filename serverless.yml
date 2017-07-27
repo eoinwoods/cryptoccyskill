@@ -67,6 +67,11 @@ functions:
     events:
       - schedule: rate(10 minutes)
 
+  provide_prices:
+    handler: crypto_prices_skill.lambda_handler
+    events:
+      - alexaSkill
+
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events
 #    Check the event documentation for details
