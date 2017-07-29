@@ -3,7 +3,7 @@ import unittest
 from datetime import datetime
 import json
 
-class TestStringMethods(unittest.TestCase):
+class TestPriceRetriever(unittest.TestCase):
 
 
     def test_iso8601_conversion(self):
@@ -25,19 +25,8 @@ class TestStringMethods(unittest.TestCase):
         price_json = json.loads(price_str)
         db_record = price_retriever.create_database_record(price_json)
         print(db_record)
-        self.assertTrue(db_record['timestamp'])
+        self.assertTrue(db_record['pricesTimestamp'])
         self.assertTrue(db_record['ETH']['GBP'] > 1.0)
         
-    # def test_isupper(self):
-    #     self.assertTrue('FOO'.isupper())
-    #     self.assertFalse('Foo'.isupper())
-
-    # def test_split(self):
-    #     s = 'hello world'
-    #     self.assertEqual(s.split(), ['hello', 'world'])
-    #     # check that s.split fails when the separator is not a string
-    #     with self.assertRaises(TypeError):
-    #         s.split(2)
-
 if __name__ == '__main__':
     unittest.main()

@@ -1,3 +1,12 @@
+import boto3
+import env_settings as env
+
+# TODO - should be environment really
+REGION = env.REGION
+PRICE_TABLE = env.PRICE_TABLE
+LATEST_TABLE = env.LATEST_TABLE
+
+
 def lambda_handler(event, context):
     """ Route the incoming request based on type (LaunchRequest, IntentRequest,
     etc.) The JSON body of the request is provided in the event parameter.
@@ -47,6 +56,8 @@ def on_intent(intent_request, session):
     """ Called when the user specifies an intent for this skill """
     print("on_intent requestId=" + intent_request['requestId'] +
           ", sessionId=" + session['sessionId'])
+    # Dispatch to your skill's launch
+    return get_prices_response()
 
 def on_session_ended(session_ended_request, session):
     """ Called when the user ends the session.
@@ -58,14 +69,33 @@ def on_session_ended(session_ended_request, session):
 # -------------------- Functional procedures --------------
 
 def get_prices_response():
-
     session_attributes = {}
     card_title = "Crypto Currency Prices"
-    speech_output = "The crypto currency prices are 123.45 and 678.90"
+    speech_output = "The price of bitcoin is 123.45 and Ethereum costs 678.90"
     reprompt_text = ""
     should_end_session = True
     return build_response(session_attributes, build_speechlet_response(
         card_title, speech_output, reprompt_text, should_end_session))
+
+def get_latest_timestamp():
+    dynamo = boto3.resource("dynamodb", region_name=REGION)
+    latestTable = dynamo.Table(LATEST_TABLE)
+    print("Table: " + str(latestTable))
+    print("Checking " + LATEST_TABLE + " for 'latestKey'")
+    latestResult = latestTable.get_item(
+        Key = { 'latestKey' : "LATEST"}
+    )
+    latest_timestamp = latestResult['Item']['latestTimestamp']
+    return latest_timestamp
+
+def get_latest_prices(item_timestamp):
+    dynamo = boto3.resource("dynamodb", region_name=REGION)
+    pricesTable = dynamo.Table(PRICE_TABLE)
+    pricesResult = pricesTable.get_item(
+        Key = { 'pricesTimestamp' : item_timestamp}
+    )
+    return pricesResult
+
 
 # --------------- Helpers that build all of the responses ----------------------
 

@@ -24,6 +24,7 @@ provider:
 # you can overwrite defaults here
 #  stage: dev
 #  region: us-east-1
+  stage: prod
   region: eu-west-1
 
   iamRoleStatements:
@@ -31,6 +32,10 @@ provider:
       Action:
         - "dynamodb:*"
       Resource: "arn:aws:dynamodb:eu-west-1:381745581031:table/cryptoPricesTable"
+    - Effect: "Allow"
+      Action:
+        - "dynamodb:*"
+      Resource: "arn:aws:dynamodb:eu-west-1:381745581031:table/latestPriceTable"
 
 # you can add statements to the Lambda function's IAM Role here
 #  iamRoleStatements:
@@ -51,6 +56,8 @@ provider:
 # you can define service wide environment variables here
   environment:
     request_url: https://min-api.cryptocompare.com/data/pricemulti?fsyms=BTC,ETH,LTC&tsyms=USD,EUR,GBP
+    aws_region:  eu-west-1
+    db_table:    cryptoPricesTable
 
 # you can add packaging information here
 #package:
@@ -117,16 +124,29 @@ functions:
 #       Value: "Some output value"
 resources:  # CloudFormation template syntax
   Resources:
-    usersTable:
+    pricesTable:
       Type: AWS::DynamoDB::Table
       Properties:
         TableName: cryptoPricesTable
         AttributeDefinitions:
-          - AttributeName: timestamp
+          - AttributeName: pricesTimestamp
             AttributeType: S
         KeySchema:
-          - AttributeName: timestamp
+          - AttributeName: pricesTimestamp
             KeyType: HASH
         ProvisionedThroughput:
-          ReadCapacityUnits: 1
+          ReadCapacityUnits: 10
+          WriteCapacityUnits: 1
+    latestTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: latestPriceTable
+        AttributeDefinitions:
+          - AttributeName: latestKey
+            AttributeType: S
+        KeySchema:
+          - AttributeName: latestKey
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 10
           WriteCapacityUnits: 1

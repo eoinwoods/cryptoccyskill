@@ -5,6 +5,18 @@ import json
 
 class TestCryptoPricesSkill(unittest.TestCase):
 
+
+    # This isn't a unit test as it connects to AWS
+    def test_get_latest_timestamp(self):
+        ts = crypto_prices_skill.get_latest_timestamp()
+        print("TIMESTAMP:" + ts)
+
+    # This isn't a unit test as it connects to AWS
+    def test_get_prices(self):
+        ts = crypto_prices_skill.get_latest_timestamp()
+        resp = crypto_prices_skill.get_latest_prices(ts)
+        print("GetPricesResp:" + str(resp))
+
     def test_new_session(self):
         event = {
             'request' : {
@@ -38,7 +50,7 @@ class TestCryptoPricesSkill(unittest.TestCase):
         }
         output = crypto_prices_skill.lambda_handler(event, {})
         response = output['response']
-        self.assertTrue((response['outputSpeech']['text']).startswith("The crypto currency prices are"))
+        self.assertTrue((response['outputSpeech']['text']).startswith("The price of bitcoin is"))
 
     def test_intent_request(self):
         event = {
@@ -54,8 +66,9 @@ class TestCryptoPricesSkill(unittest.TestCase):
                 'new' : False
             }
         }
-        crypto_prices_skill.lambda_handler(event, {})
-        self.assertTrue(True)
+        output = crypto_prices_skill.lambda_handler(event, {})
+        response = output['response']
+        self.assertTrue((response['outputSpeech']['text']).startswith("The price of bitcoin is"))
 
     def test_session_ended_request(self):
         event = {
@@ -73,6 +86,7 @@ class TestCryptoPricesSkill(unittest.TestCase):
         }
         crypto_prices_skill.lambda_handler(event, {})
         self.assertTrue(True)
+
 
 if __name__ == '__main__':
     unittest.main()
