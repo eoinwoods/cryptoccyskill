@@ -3,6 +3,8 @@ import requests
 import boto3
 import env_settings as env
 from datetime import datetime
+from decimal import Decimal
+import decimal 
 
 # TODO - should be environment really
 REGION = env.REGION
@@ -25,16 +27,24 @@ def create_database_record(prices_doc):
     db_record[PRICES_TIMESTAMP_COLUMN] = ts
     return db_record
 
+def prices_to_json(prices):
+    ret = {}
+    for ccy in prices:
+        ret[ccy] = Decimal(str(prices[ccy]))
+    return ret 
+
 def insert_database_record(db_record_json, price_table_name, latest_table_name, aws_region):
     dynamo = boto3.resource("dynamodb", region_name=aws_region)
     priceTable = dynamo.Table(price_table_name)
     latestTable = dynamo.Table(latest_table_name)
+    print("JSONRecord: '" + str(db_record_json) + "'")
+    print('BTC item=' + str(db_record_json['BTC']))
     priceTable.put_item(
         Item={
             PRICES_TIMESTAMP_COLUMN : db_record_json[PRICES_TIMESTAMP_COLUMN],
-            'BTC': json.dumps(db_record_json['BTC']),
-            'ETH': json.dumps(db_record_json['ETH']),
-            'LTC': json.dumps(db_record_json['LTC'])
+            'BTC': prices_to_json(db_record_json['BTC']),
+            'ETH': prices_to_json(db_record_json['ETH']),
+            'LTC': prices_to_json(db_record_json['LTC'])
         }
     )
     latestTable.put_item(

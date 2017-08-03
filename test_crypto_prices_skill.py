@@ -9,13 +9,24 @@ class TestCryptoPricesSkill(unittest.TestCase):
     # This isn't a unit test as it connects to AWS
     def test_get_latest_timestamp(self):
         ts = crypto_prices_skill.get_latest_timestamp()
-        print("TIMESTAMP:" + ts)
 
     # This isn't a unit test as it connects to AWS
     def test_get_prices(self):
         ts = crypto_prices_skill.get_latest_timestamp()
         resp = crypto_prices_skill.get_latest_prices(ts)
-        print("GetPricesResp:" + str(resp))
+
+    def test_prices_converted_to_text(self):
+        json_record = '{"pricesTimestamp" : "2017-07-30T21:01:35.793823", "ETH": {"EUR": 1.0, "GBP": 2.0, "USD": 3.0}, "BTC": {"EUR": 4.0, "GBP": 5.0, "USD": 6.0}, "LTC": {"EUR": 7.0, "GBP": 8.0, "USD": 9.0}}'
+        text = crypto_prices_skill.json_prices_to_text(json.loads(json_record))
+        print("CONV TEXT:" + str(text))
+        self.assertTrue(len(text) > 20)
+        self.assertRegex(text, ".*Bitcoin.*Ethereum.*Litecoin.*")
+
+    def test_prices_response(self):
+        resp = crypto_prices_skill.get_prices_response()
+        prices_text = resp['response']['outputSpeech']['text']
+        self.assertTrue(len(prices_text) > 30)
+        self.assertRegex(prices_text, "at [0-9][0-9] [0-9][0-9] on the .*Bitcoin costs [0-9]*\.[0-9]* dollars, Ethereum costs [0-9]*\.[0-9]* dollars, Litecoin costs [0-9]*\.[0-9]* dollars") 
 
     def test_new_session(self):
         event = {
@@ -50,7 +61,7 @@ class TestCryptoPricesSkill(unittest.TestCase):
         }
         output = crypto_prices_skill.lambda_handler(event, {})
         response = output['response']
-        self.assertTrue((response['outputSpeech']['text']).startswith("The price of bitcoin is"))
+        self.assertRegex((response['outputSpeech']['text']), "at [0-9][0-9] [0-9][0-9].*")
 
     def test_intent_request(self):
         event = {
@@ -68,7 +79,7 @@ class TestCryptoPricesSkill(unittest.TestCase):
         }
         output = crypto_prices_skill.lambda_handler(event, {})
         response = output['response']
-        self.assertTrue((response['outputSpeech']['text']).startswith("The price of bitcoin is"))
+        self.assertRegex((response['outputSpeech']['text']), "at [0-9][0-9] [0-9][0-9].*")
 
     def test_session_ended_request(self):
         event = {

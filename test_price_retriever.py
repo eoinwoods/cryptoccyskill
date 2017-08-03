@@ -2,6 +2,7 @@ import price_retriever
 import unittest
 from datetime import datetime
 import json
+from decimal import Decimal
 
 class TestPriceRetriever(unittest.TestCase):
 
@@ -27,6 +28,13 @@ class TestPriceRetriever(unittest.TestCase):
         print(db_record)
         self.assertTrue(db_record['pricesTimestamp'])
         self.assertTrue(db_record['ETH']['GBP'] > 1.0)
+
+    def test_prices_to_json(self):
+        prices_data = {'GBP': 22.02, 'EUR': 11.01, 'USD': 33.03}
+        json = price_retriever.prices_to_json(prices_data)
+        self.assertEqual(json['GBP'], Decimal('22.02'))
+        self.assertEqual(json['EUR'], Decimal('11.01'))
+        self.assertEqual(json['USD'], Decimal('33.03'))
         
 if __name__ == '__main__':
     unittest.main()

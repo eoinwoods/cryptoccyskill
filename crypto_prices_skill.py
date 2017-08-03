@@ -1,5 +1,8 @@
 import boto3
 import env_settings as env
+import datetime
+import calendar
+import json
 
 # TODO - should be environment really
 REGION = env.REGION
@@ -68,14 +71,41 @@ def on_session_ended(session_ended_request, session):
 
 # -------------------- Functional procedures --------------
 
+# https://stackoverflow.com/a/21143552/1978496
+def ordinal(n):
+    return ["th", "st", "nd", "rd"][n%10 if n%10<4 and not (10<n%100<14) else 0]
+
+def number_as_ordinal(n):
+    return str(n) + ordinal(n)
+
+def iso8601_timestamp_to_datetime(timestamp_string):
+    return datetime.datetime.strptime(timestamp_string, "%Y-%m-%dT%H:%M:%S.%f")
+
+def json_prices_to_text(json_prices):
+    print("JSONPRICESTYPE:" + str(type(json_prices)))
+    print("BTCITEMTYPE:" + str(type(json_prices["BTC"])))
+    result = "at {} {} on the {} of {}, Bitcoin costs {} dollars, Ethereum costs {} dollars, Litecoin costs {} dollars"
+
+    ts = iso8601_timestamp_to_datetime(json_prices["pricesTimestamp"]) 
+
+    return result.format(ts.hour, format(ts.minute, '02'), number_as_ordinal(ts.day), calendar.month_name[ts.month],
+                        json_prices["BTC"]["USD"], json_prices["ETH"]["USD"], json_prices["LTC"]["USD"])
+
+
 def get_prices_response():
     session_attributes = {}
     card_title = "Crypto Currency Prices"
-    speech_output = "The price of bitcoin is 123.45 and Ethereum costs 678.90"
+    speech_output = get_prices_text()
     reprompt_text = ""
     should_end_session = True
     return build_response(session_attributes, build_speechlet_response(
         card_title, speech_output, reprompt_text, should_end_session))
+
+def get_prices_text():
+    ts = get_latest_timestamp()
+    prices = get_latest_prices(ts)
+    print("PRICESJSON:" + str(prices))
+    return json_prices_to_text(prices)
 
 def get_latest_timestamp():
     dynamo = boto3.resource("dynamodb", region_name=REGION)
@@ -94,7 +124,7 @@ def get_latest_prices(item_timestamp):
     pricesResult = pricesTable.get_item(
         Key = { 'pricesTimestamp' : item_timestamp}
     )
-    return pricesResult
+    return pricesResult['Item']
 
 
 # --------------- Helpers that build all of the responses ----------------------
