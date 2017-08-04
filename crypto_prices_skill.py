@@ -69,7 +69,7 @@ def on_session_ended(session_ended_request, session):
     print("on_session_ended requestId=" + session_ended_request['requestId'] +
           ", sessionId=" + session['sessionId'])
 
-# -------------------- Functional procedures --------------
+# -------------------- Utility procedures --------------
 
 # https://stackoverflow.com/a/21143552/1978496
 def ordinal(n):
@@ -85,8 +85,6 @@ def iso8601_timestamp_to_datetime(timestamp_string):
     return datetime.datetime.strptime(timestamp_string, "%Y-%m-%dT%H:%M:%S.%f")
 
 def json_prices_to_text(json_prices):
-    print("JSONPRICESTYPE:" + str(type(json_prices)))
-    print("BTCITEMTYPE:" + str(type(json_prices["BTC"])))
     result = "{} minutes ago, Bitcoin cost {} dollars, Ethereum cost {} dollars, Litecoin cost {} dollars"
 
     ts = iso8601_timestamp_to_datetime(json_prices["pricesTimestamp"]) 
@@ -95,6 +93,8 @@ def json_prices_to_text(json_prices):
     return result.format(minutes_ago, 
                         json_prices["BTC"]["USD"], json_prices["ETH"]["USD"], json_prices["LTC"]["USD"])
 
+
+# -------------------- Response handling procedures --------------
 
 def get_prices_response():
     session_attributes = {}
@@ -108,14 +108,11 @@ def get_prices_response():
 def get_prices_text():
     ts = get_latest_timestamp()
     prices = get_latest_prices(ts)
-    print("PRICESJSON:" + str(prices))
     return json_prices_to_text(prices)
 
 def get_latest_timestamp():
     dynamo = boto3.resource("dynamodb", region_name=REGION)
     latestTable = dynamo.Table(LATEST_TABLE)
-    print("Table: " + str(latestTable))
-    print("Checking " + LATEST_TABLE + " for 'latestKey'")
     latestResult = latestTable.get_item(
         Key = { 'latestKey' : "LATEST"}
     )
@@ -131,7 +128,7 @@ def get_latest_prices(item_timestamp):
     return pricesResult['Item']
 
 
-# --------------- Helpers that build all of the responses ----------------------
+# --------------- Procedures to create response structures ----------------------
 
 def build_speechlet_response(title, output, reprompt_text, should_end_session):
     return {

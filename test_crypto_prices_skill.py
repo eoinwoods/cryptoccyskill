@@ -13,17 +13,16 @@ class TestCryptoPricesSkill(unittest.TestCase):
     def test_time_difference(self):
         ts = datetime.datetime.now()
         ts2 = ts + datetime.timedelta(0, 130)
-        self.assertEquals(2, crypto_prices_skill.calc_time_difference_in_minutes(ts, ts2))
+        self.assertEqual(2, crypto_prices_skill.calc_time_difference_in_minutes(ts, ts2))
 
     def test_time_difference_less_than_one_minute(self):
         ts = datetime.datetime.now()
         ts2 = ts + datetime.timedelta(0, 20)
-        self.assertEquals(0, crypto_prices_skill.calc_time_difference_in_minutes(ts, ts2))
+        self.assertEqual(0, crypto_prices_skill.calc_time_difference_in_minutes(ts, ts2))
 
     def test_prices_converted_to_text(self):
         json_record = '{"pricesTimestamp" : "2017-07-30T21:01:35.793823", "ETH": {"EUR": 1.0, "GBP": 2.0, "USD": 3.0}, "BTC": {"EUR": 4.0, "GBP": 5.0, "USD": 6.0}, "LTC": {"EUR": 7.0, "GBP": 8.0, "USD": 9.0}}'
         text = crypto_prices_skill.json_prices_to_text(json.loads(json_record))
-        print("CONV TEXT:" + str(text))
         self.assertTrue(len(text) > 20)
         self.assertRegex(text, ".*Bitcoin.*Ethereum.*Litecoin.*")
 

@@ -55,9 +55,10 @@ provider:
 
 # you can define service wide environment variables here
   environment:
-    request_url: https://min-api.cryptocompare.com/data/pricemulti?fsyms=BTC,ETH,LTC&tsyms=USD,EUR,GBP
-    aws_region:  eu-west-1
-    db_table:    cryptoPricesTable
+    request_url:    https://min-api.cryptocompare.com/data/pricemulti?fsyms=BTC,ETH,LTC&tsyms=USD,EUR,GBP
+    aws_region:     eu-west-1
+    prices_table:   cryptoPricesTable
+    latest_table:   latestPriceTable
 
 # you can add packaging information here
 #package:
