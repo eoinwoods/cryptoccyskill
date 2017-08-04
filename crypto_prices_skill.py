@@ -78,17 +78,21 @@ def ordinal(n):
 def number_as_ordinal(n):
     return str(n) + ordinal(n)
 
+def calc_time_difference_in_minutes(startTime, endTime):
+    return round((endTime - startTime).seconds/60)
+
 def iso8601_timestamp_to_datetime(timestamp_string):
     return datetime.datetime.strptime(timestamp_string, "%Y-%m-%dT%H:%M:%S.%f")
 
 def json_prices_to_text(json_prices):
     print("JSONPRICESTYPE:" + str(type(json_prices)))
     print("BTCITEMTYPE:" + str(type(json_prices["BTC"])))
-    result = "at {} {} on the {} of {}, Bitcoin costs {} dollars, Ethereum costs {} dollars, Litecoin costs {} dollars"
+    result = "{} minutes ago, Bitcoin cost {} dollars, Ethereum cost {} dollars, Litecoin cost {} dollars"
 
     ts = iso8601_timestamp_to_datetime(json_prices["pricesTimestamp"]) 
 
-    return result.format(ts.hour, format(ts.minute, '02'), number_as_ordinal(ts.day), calendar.month_name[ts.month],
+    minutes_ago = calc_time_difference_in_minutes(ts, datetime.datetime.now())
+    return result.format(minutes_ago, 
                         json_prices["BTC"]["USD"], json_prices["ETH"]["USD"], json_prices["LTC"]["USD"])
 
 
