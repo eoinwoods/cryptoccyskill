@@ -72,18 +72,14 @@ def on_session_ended(session_ended_request, session):
 
 # -------------------- Utility procedures --------------
 
-# https://stackoverflow.com/a/21143552/1978496
-def ordinal(n):
-    return ["th", "st", "nd", "rd"][n%10 if n%10<4 and not (10<n%100<14) else 0]
-
-def number_as_ordinal(n):
-    return str(n) + ordinal(n)
-
 def calc_time_difference_in_minutes(startTime, endTime):
     return round((endTime - startTime).seconds/60)
 
 def iso8601_timestamp_to_datetime(timestamp_string):
     return datetime.datetime.strptime(timestamp_string, "%Y-%m-%dT%H:%M:%S.%f")
+
+def wrap_as_ssml(string):
+    return "<speak>" + string + "</speak>"
 
 def format_price(price):
     msg = ""
@@ -97,15 +93,29 @@ def format_price(price):
     return msg
 
 def json_prices_to_text(json_prices):
-    result = "{} minutes ago, Bitcoin cost {}, Ethereum cost {}, Litecoin cost {}"
-
+    price_msg_fragment = "Bitcoin cost {}, Ethereum cost {}, Litecoin cost {}"
+    delayed_price_msg = wrap_as_ssml("{} minute{} ago, " + price_msg_fragment)
+    # the odd markup in this string is SSML which you can find out more about at the URL
+    # below - TLDR is that AWS Alexa uses it to direct the voice synthesis pronunciation
+    # which we need for the word "minute"
+    # Ref: https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/speech-synthesis-markup-language-ssml-reference
+    current_price_msg = wrap_as_ssml("less than a <phoneme alphabet='ipa' ph='mˈɪnɪt'>minute</phoneme> ago, " + \
+                        price_msg_fragment)
     ts = iso8601_timestamp_to_datetime(json_prices["pricesTimestamp"]) 
 
     minutes_ago = calc_time_difference_in_minutes(ts, datetime.datetime.now())
-    return result.format(minutes_ago, 
-                        format_price(json_prices["BTC"]["USD"]), 
-                        format_price(json_prices["ETH"]["USD"]), 
-                        format_price(json_prices["LTC"]["USD"]))
+    msg = ""
+    if (minutes_ago < 1) :
+        msg = current_price_msg.format(format_price(json_prices["BTC"]["USD"]), 
+                                       format_price(json_prices["ETH"]["USD"]), 
+                                       format_price(json_prices["LTC"]["USD"]))
+    else:
+        msg = delayed_price_msg.format(minutes_ago, 
+                                       ("s" if minutes_ago > 1 else ""),
+                                       format_price(json_prices["BTC"]["USD"]), 
+                                       format_price(json_prices["ETH"]["USD"]), 
+                                       format_price(json_prices["LTC"]["USD"]))
+    return msg
 
 
 # -------------------- Response handling procedures --------------
@@ -147,8 +157,8 @@ def get_latest_prices(item_timestamp):
 def build_speechlet_response(title, output, reprompt_text, should_end_session):
     return {
         'outputSpeech': {
-            'type': 'PlainText',
-            'text': output
+            'type': 'SSML',
+            'ssml': output
         },
         'card': {
             'type': 'Simple',
