@@ -3,6 +3,7 @@ import env_settings as env
 import datetime
 import calendar
 import json
+import math
 
 # TODO - should be environment really
 REGION = env.REGION
@@ -84,14 +85,27 @@ def calc_time_difference_in_minutes(startTime, endTime):
 def iso8601_timestamp_to_datetime(timestamp_string):
     return datetime.datetime.strptime(timestamp_string, "%Y-%m-%dT%H:%M:%S.%f")
 
+def format_price(price):
+    msg = ""
+
+    (dollars, cents) = str(price).split(".")
+    if (int(cents) > 0):
+        msg = "{} dollars and {} cents".format(dollars, cents)
+    else:
+        msg = "{} dollars exactly".format(dollars)
+
+    return msg
+
 def json_prices_to_text(json_prices):
-    result = "{} minutes ago, Bitcoin cost {} dollars, Ethereum cost {} dollars, Litecoin cost {} dollars"
+    result = "{} minutes ago, Bitcoin cost {}, Ethereum cost {}, Litecoin cost {}"
 
     ts = iso8601_timestamp_to_datetime(json_prices["pricesTimestamp"]) 
 
     minutes_ago = calc_time_difference_in_minutes(ts, datetime.datetime.now())
     return result.format(minutes_ago, 
-                        json_prices["BTC"]["USD"], json_prices["ETH"]["USD"], json_prices["LTC"]["USD"])
+                        format_price(json_prices["BTC"]["USD"]), 
+                        format_price(json_prices["ETH"]["USD"]), 
+                        format_price(json_prices["LTC"]["USD"]))
 
 
 # -------------------- Response handling procedures --------------

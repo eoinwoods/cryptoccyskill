@@ -26,6 +26,14 @@ class TestCryptoPricesSkill(unittest.TestCase):
         self.assertTrue(len(text) > 20)
         self.assertRegex(text, ".*Bitcoin.*Ethereum.*Litecoin.*")
 
+    def test_price_format_with_cents(self):
+        msg = crypto_prices_skill.format_price(12.45)
+        self.assertEqual("12 dollars and 45 cents", msg)
+
+    def test_price_format_without_cents(self):
+        msg = crypto_prices_skill.format_price(12.0)
+        self.assertEqual("12 dollars exactly", msg)
+
     # This isn't a unit test as it connects to AWS
     def test_get_prices(self):
         ts = crypto_prices_skill.get_latest_timestamp()
@@ -36,7 +44,7 @@ class TestCryptoPricesSkill(unittest.TestCase):
         resp = crypto_prices_skill.get_prices_response()
         prices_text = resp['response']['outputSpeech']['text']
         self.assertTrue(len(prices_text) > 30)
-        self.assertRegex(prices_text, "[0-9][0-9]* minutes ago, Bitcoin cost [0-9]*\.[0-9]* dollars, Ethereum cost [0-9]*\.[0-9]* dollars, Litecoin cost [0-9]*\.[0-9]* dollars") 
+        self.assertRegex(prices_text, "[0-9][0-9]* minutes ago, Bitcoin cost [0-9]+ dollars and [0-9]+ cents, Ethereum cost [0-9]+ dollars and [0-9]+ cents, Litecoin cost [0-9]+ dollars and [0-9]+ cents") 
 
     def test_new_session(self):
         event = {
