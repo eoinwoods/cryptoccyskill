@@ -37,8 +37,6 @@ def insert_database_record(db_record_json, price_table_name, latest_table_name, 
     dynamo = boto3.resource("dynamodb", region_name=aws_region)
     priceTable = dynamo.Table(price_table_name)
     latestTable = dynamo.Table(latest_table_name)
-    print("JSONRecord: '" + str(db_record_json) + "'")
-    print('BTC item=' + str(db_record_json['BTC']))
     priceTable.put_item(
         Item={
             PRICES_TIMESTAMP_COLUMN : db_record_json[PRICES_TIMESTAMP_COLUMN],
