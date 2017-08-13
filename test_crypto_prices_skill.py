@@ -33,8 +33,8 @@ class TestCryptoPricesSkill(unittest.TestCase):
         json_record = '{"pricesTimestamp" : "' + timestamp_string + '", "ETH": {"EUR": 1.0, "GBP": 2.0, "USD": 3.0}, "BTC": {"EUR": 4.0, "GBP": 5.0, "USD": 6.0}, "LTC": {"EUR": 7.0, "GBP": 8.0, "USD": 9.0}}'
         text = crypto_prices_skill.json_prices_to_text(json.loads(json_record))
         self.assertTrue(len(text) > 20)
-        # check an approximate match to make it slightly more robust
-        self.assertRegex(text, "1 minute ago")
+        # check an approximate match to make it slightly more robust and allow for SSML and changes
+        self.assertRegex(text, "1.*minute.*ago")
 
 
     def test_current_prices_converted_to_text(self):
@@ -49,7 +49,7 @@ class TestCryptoPricesSkill(unittest.TestCase):
         # the <speak> tags are needed to indicate SSML
         # See:
         # https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/speech-synthesis-markup-language-ssml-reference#speech-synthesis-markup-language-ssml-reference
-        self.assertRegex(text, crypto_prices_skill.wrap_as_ssml("less than a .*minute.* ago.*Bitcoin.*[0-9]+ dollars.*Ethereum.*[0-9]+ dollars.*Litecoin.*[0-9]+ dollars.*"))
+        self.assertRegex(text, "less than a .*minute.* ago.*Bitcoin.*[0-9]+ dollars.*Ethereum.*[0-9]+ dollars.*Litecoin.*[0-9]+ dollars.*")
 
     def test_price_format_with_cents(self):
         msg = crypto_prices_skill.format_price(12.45)
@@ -58,6 +58,10 @@ class TestCryptoPricesSkill(unittest.TestCase):
     def test_price_format_without_cents(self):
         msg = crypto_prices_skill.format_price(12.0)
         self.assertEqual("12 dollars exactly", msg)
+
+    def test_ssml_wrapping_replaces_correctly(self):
+        msg = crypto_prices_skill.wrap_as_ssml("text with the word minute in it")
+        self.assertRegex(msg, "<speak>.*<phoneme.*minute.*</phoneme>.*</speak>")
 
     def test_new_session(self):
         event = {

@@ -79,7 +79,15 @@ def iso8601_timestamp_to_datetime(timestamp_string):
     return datetime.datetime.strptime(timestamp_string, "%Y-%m-%dT%H:%M:%S.%f")
 
 def wrap_as_ssml(string):
-    return "<speak>" + string + "</speak>"
+    # Note the use of spaces, these are a simplistic mechanism for replacing 
+    # a word, rather than part of one (which works well enough for this situation)
+    replacements = {
+        " minute " : " <phoneme alphabet='ipa' ph='mˈɪnɪt'>minute</phoneme> "
+    }
+    output_string = string
+    for word in replacements:
+        output_string = output_string.replace(word, replacements[word])
+    return "<speak>" + output_string + "</speak>"
 
 def format_price(price):
     msg = ""
@@ -94,13 +102,13 @@ def format_price(price):
 
 def json_prices_to_text(json_prices):
     price_msg_fragment = "Bitcoin cost {}, Ethereum cost {}, Litecoin cost {}"
-    delayed_price_msg = wrap_as_ssml("{} minute{} ago, " + price_msg_fragment)
+    delayed_price_msg = "{} minute{} ago, " + price_msg_fragment
     # the odd markup in this string is SSML which you can find out more about at the URL
     # below - TLDR is that AWS Alexa uses it to direct the voice synthesis pronunciation
     # which we need for the word "minute"
     # Ref: https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/speech-synthesis-markup-language-ssml-reference
-    current_price_msg = wrap_as_ssml("less than a <phoneme alphabet='ipa' ph='mˈɪnɪt'>minute</phoneme> ago, " + \
-                        price_msg_fragment)
+    current_price_msg = "less than a <phoneme alphabet='ipa' ph='mˈɪnɪt'>minute</phoneme> ago, " + \
+                        price_msg_fragment
     ts = iso8601_timestamp_to_datetime(json_prices["pricesTimestamp"]) 
 
     minutes_ago = calc_time_difference_in_minutes(ts, datetime.datetime.now())
@@ -123,11 +131,12 @@ def json_prices_to_text(json_prices):
 def get_prices_response():
     session_attributes = {}
     card_title = "Crypto Currency Prices"
-    speech_output = get_prices_text()
+    text_output = get_prices_text() 
+    speech_output = wrap_as_ssml(text_output)
     reprompt_text = ""
     should_end_session = True
     return build_response(session_attributes, build_speechlet_response(
-        card_title, speech_output, reprompt_text, should_end_session))
+        card_title, text_output, speech_output, reprompt_text, should_end_session))
 
 def get_prices_text():
     ts = get_latest_timestamp()
@@ -154,16 +163,16 @@ def get_latest_prices(item_timestamp):
 
 # --------------- Procedures to create response structures ----------------------
 
-def build_speechlet_response(title, output, reprompt_text, should_end_session):
+def build_speechlet_response(title, text_output, speech_output, reprompt_text, should_end_session):
     return {
         'outputSpeech': {
             'type': 'SSML',
-            'ssml': output
+            'ssml': speech_output
         },
         'card': {
             'type': 'Simple',
             'title': title,
-            'content': output
+            'content': text_output
         },
         'reprompt': {
             'outputSpeech': {
